@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 class Location(BaseModel):
     lat: float
@@ -7,7 +7,7 @@ class Location(BaseModel):
     accuracy_meters: Optional[float] = None
 
 class EmergencyCallPayload(BaseModel):
-    stream_type: str = "EMERGENCY_CALL"
+    stream_type: Literal["EMERGENCY_CALL"] = "EMERGENCY_CALL"
     timestamp: str
     caller_id: str
     location: Location
@@ -15,7 +15,7 @@ class EmergencyCallPayload(BaseModel):
     ai_keywords: List[str] = Field(default_factory=list)
 
 class CitizenAppPayload(BaseModel):
-    stream_type: str = "CITIZEN_APP"
+    stream_type: Literal["CITIZEN_APP"] = "CITIZEN_APP"
     timestamp: str
     user_id: str
     location: Location
@@ -23,7 +23,7 @@ class CitizenAppPayload(BaseModel):
     description: str
 
 class IotSensorPayload(BaseModel):
-    stream_type: str = "IOT_SENSOR"
+    stream_type: Literal["IOT_SENSOR"] = "IOT_SENSOR"
     timestamp: str
     sensor_id: str
     sensor_type: str

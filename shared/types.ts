@@ -49,22 +49,12 @@ export type UnitTelemetryPayload = {
   location: Location & { heading?: number; speed_mph?: number };
 };
 
-export type HospitalStatusPayload = {
-  stream_type: "HOSPITAL_STATUS";
-  timestamp: string;
-  facility_id: string;
-  trauma_level: number;
-  available_er_beds: number;
-  operating_status: "NORMAL" | "AT_CAPACITY";
-};
-
 // A union type of all possible incoming data streams
 export type SimulationPayload =
   | EmergencyCallPayload
   | CitizenAppPayload
   | IotSensorPayload
-  | UnitTelemetryPayload
-  | HospitalStatusPayload;
+  | UnitTelemetryPayload;
 
 
 // --- 2. CORE ENTITIES (Processed Data) ---

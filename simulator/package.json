@@ -1,0 +1,27 @@
+{
+  "name": "simulator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test:setup": "echo \"Simulation environment ready\"",
+    "test:generators": "tsx src/test_generators.ts",
+    "test:clusters": "set FORCE_CLUSTER_EVENTS=true&& tsx src/test_clusters.ts",
+    "start": "tsx src/engine.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@faker-js/faker": "^10.6.0",
+    "axios": "^1.20.0",
+    "axios-retry": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.14",
+    "typescript": "^7.0.2"
+  }
+}
