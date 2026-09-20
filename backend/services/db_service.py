@@ -25,10 +25,10 @@ class SupabaseDB:
         except Exception:
             # Fallback for hackathon testing if resources table isn't populated yet
             return {
-                "U-104": {"type": "fire_truck", "name": "Engine 4"},
-                "U-108": {"type": "fire_truck", "name": "Ladder 2"},
-                "U-203": {"type": "rescue", "name": "Rescue 3"},
-                "U-401": {"type": "ambulance", "name": "Medic 7"}
+                "11111111-0000-0000-0000-000000000104": {"type": "fire_truck", "name": "Engine 4"},
+                "11111111-0000-0000-0000-000000000108": {"type": "fire_truck", "name": "Ladder 2"},
+                "11111111-0000-0000-0000-000000000203": {"type": "rescue_team", "name": "Rescue 3"},
+                "11111111-0000-0000-0000-000000000307": {"type": "ambulance", "name": "Medic 7"}
             }
 
     def find_nearby_incident(self, lat, lng, time_str, radius_m=500):
@@ -72,7 +72,7 @@ class SupabaseDB:
         current['source_events'].append(payload_id)
         
         # Map current string to number for comparison
-        sev_map = {"LOW": 1, "MEDIUM": 3, "HIGH": 4, "CRITICAL": 5}
+        sev_map = {"LOW": 2, "MEDIUM": 3, "HIGH": 4, "CRITICAL": 5}
         current_sev_num = sev_map.get(current['severity'], 1)
         max_sev_num = max(current_sev_num, new_severity)
         
@@ -96,3 +96,20 @@ class SupabaseDB:
             "ai_recommendation": ai_text
         }).eq('id', incident_id).execute()
         return response.data[0]
+
+    def update_resource_location(self, unit_id, lat, lng, status):
+        """
+        Push live telemetry coordinates to the resources table.
+        Supabase Realtime broadcasts the UPDATE to all subscribed frontends,
+        enabling live map markers without polling.
+        """
+        try:
+            self.client.table('resources').update({
+                "latitude": lat,
+                "longitude": lng,
+                "status": status.lower(),
+                "updated_at": datetime.utcnow().isoformat()
+            }).eq('id', unit_id).execute()
+        except Exception as e:
+            # Fail silently — telemetry streaming is non-critical
+            print(f"[WARN] Could not push telemetry to Supabase for {unit_id}: {e}")

@@ -32,10 +32,12 @@ class IncidentPipeline:
         elif isinstance(payload, IotSensorPayload):
             payload_id = payload.sensor_id
             # Hardcoded Logic for Sensors (No ML Required)
-            if payload.sensor_type in ["SMOKE_DETECTOR", "FLAME_DETECTOR"]:
+            if payload.sensor_type in ["SMOKE_DETECTOR", "FLAME_DETECTOR", "SMOKE", "HEAT"]:
                 category = "FIRE"
-            elif payload.sensor_type == "GAS_SENSOR":
+            elif payload.sensor_type in ["GAS_SENSOR", "GAS"]:
                 category = "HAZMAT"
+            elif payload.sensor_type in ["WATER", "FLOOD"]:
+                category = "FLOOD"
             else:
                 category = "CRASH"
                 

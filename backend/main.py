@@ -45,18 +45,27 @@ def ingest_payload(payload: dict):
     try:
         stream_type = payload.get("stream_type")
         
-        # 1. Telemetry Ingestion (No DB writes!)
+        # 1. Telemetry Ingestion
         if stream_type == "UNIT_TELEMETRY":
             unit_id = payload.get("unit_id")
             if unit_id not in registered_units:
                 return {"status": "rejected", "reason": f"Unregistered Unit {unit_id}"}
                 
+            lat = payload["location"]["lat"]
+            lng = payload["location"]["lng"]
+            status = payload.get("status", "AVAILABLE")
+            
+            # Cache in RAM for fast recommendation lookups
             TELEMETRY_CACHE[unit_id] = {
-                "lat": payload["location"]["lat"],
-                "lng": payload["location"]["lng"],
+                "lat": lat,
+                "lng": lng,
                 "type": registered_units[unit_id]["type"],
                 "name": registered_units[unit_id]["name"]
             }
+            
+            # Push to Supabase so Realtime streams it to the frontend map
+            pipeline.db.update_resource_location(unit_id, lat, lng, status)
+            
             return {"status": "cached", "unit": unit_id}
             
         # 2. Emergency Ingestion & Triage

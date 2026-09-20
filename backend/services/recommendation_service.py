@@ -11,13 +11,16 @@ def haversine(lat1, lon1, lat2, lon2):
 class ResourceRecommender:
     def __init__(self):
         # Rule Matrix for Emergency Types
+        # Maps incident category → list of required resource types
+        # Note: DB uses types: fire_truck, ambulance, rescue_team, equipment, police_unit
         self.type_mapping = {
-            'fire': ['fire_truck', 'hazmat'],
+            'fire': ['fire_truck', 'equipment'],
             'medical': ['ambulance'],
-            'crash': ['ambulance', 'fire_truck', 'rescue'],
-            'hazmat': ['hazmat', 'fire_truck'],
-            'rescue': ['rescue', 'ambulance'],
-            'other': ['police', 'ambulance', 'fire_truck']
+            'crash': ['ambulance', 'fire_truck', 'rescue_team'],
+            'hazmat': ['equipment', 'fire_truck'],
+            'rescue': ['rescue_team', 'ambulance'],
+            'flood': ['rescue_team', 'equipment'],
+            'other': ['police_unit', 'ambulance', 'fire_truck']
         }
         
         # Rule Matrix for Quantities based on Severity (1-5)
@@ -34,8 +37,14 @@ class ResourceRecommender:
         telemetry_cache: Dict of active units from RAM/Redis 
         Format: { "U-104": {"lat": 23.0, "lng": 72.5, "type": "fire_truck", "name": "Engine 4"} }
         """
-        category = str(incident.get('category', 'other')).lower()
-        severity = int(incident.get('severity', 3))
+        category = str(incident.get('incident_type', incident.get('category', 'other'))).lower()
+        # Severity comes back from Supabase as a string ("LOW", "CRITICAL", etc.)
+        sev_raw = incident.get('severity', 3)
+        if isinstance(sev_raw, str):
+            _sev_map = {"LOW": 2, "MEDIUM": 3, "HIGH": 4, "CRITICAL": 5}
+            severity = _sev_map.get(sev_raw.upper(), 3)
+        else:
+            severity = int(sev_raw)
         inc_lat = incident['location']['lat']
         inc_lng = incident['location']['lng']
         
@@ -69,9 +78,15 @@ class ResourceRecommender:
         if not recommended_units:
             return "No available units match the required criteria within response range."
             
-        category = str(incident.get('category', 'Emergency')).title()
+        category = str(incident.get('incident_type', incident.get('category', 'Emergency'))).title()
         severity_labels = {1: "Low", 2: "Minor", 3: "Moderate", 4: "High", 5: "Critical"}
-        sev_label = severity_labels.get(int(incident.get('severity', 3)), "Moderate")
+        sev_raw = incident.get('severity', 3)
+        if isinstance(sev_raw, str):
+            _sev_map = {"LOW": 2, "MEDIUM": 3, "HIGH": 4, "CRITICAL": 5}
+            sev_int = _sev_map.get(sev_raw.upper(), 3)
+        else:
+            sev_int = int(sev_raw)
+        sev_label = severity_labels.get(sev_int, "Moderate")
         
         unit_names = ", ".join([u['name'] for u in recommended_units])
         eta = recommended_units[0]['eta_mins'] if recommended_units else "N/A"
